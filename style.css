@@ -1,0 +1,49 @@
+@keyframes pulse-soft {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.15; transform: scale(1.05); }
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 8s infinite ease-in-out;
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 20s linear infinite;
+}
+
+.glass {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-blue {
+    background: rgba(30, 58, 138, 0.2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.window-shadow {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.taskbar-glass {
+    background: rgba(2, 6, 23, 0.8);
+    backdrop-filter: blur(30px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* BIOS typing cursor */
+.cursor-blink {
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+}
