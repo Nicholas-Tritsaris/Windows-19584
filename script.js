@@ -505,7 +505,8 @@ class OS {
             focusedWindowId: null,
             isStartOpen: false,
             calcValue: '0',
-            holoPadContent: null
+            holoPadContent: null,
+            iconPositions: {}
         };
         this.am = new AppManager(this);
         this.wm = new WindowManager(this);
@@ -557,13 +558,15 @@ class OS {
             const data = JSON.parse(saved);
             this.state.windows = data.windows || [];
             this.state.holoPadContent = data.holoPadContent || null;
+            this.state.iconPositions = data.iconPositions || {};
         }
     }
 
     saveState() {
         localStorage.setItem('os_19584_state', JSON.stringify({
             windows: this.state.windows,
-            holoPadContent: this.state.holoPadContent
+            holoPadContent: this.state.holoPadContent,
+            iconPositions: this.state.iconPositions
         }));
     }
 
@@ -573,19 +576,86 @@ class OS {
     }
 
     showBIOS() {
-        this.container.innerHTML = `<div id="bios-screen" class="fixed inset-0 bg-black text-green-500 font-mono p-10 text-xs flex flex-col items-start z-50 overflow-hidden"><div id="bios-lines"></div><div class="cursor-blink">_</div></div>`;
+        this.container.innerHTML = `
+            <div id="bios-screen" class="fixed inset-0 bg-black text-green-500 font-mono p-10 text-xs flex flex-col items-start z-50 overflow-hidden">
+                <div id="bios-lines"></div>
+                <div class="cursor-blink">_</div>
+                <div class="absolute bottom-10 right-10 text-green-900 animate-pulse tracking-widest">[TAB] FOR BIOS SETTINGS</div>
+            </div>
+        `;
         const lines = ["ASUS-QUANTUM BIOS v195.8.4", "Neuro-Core @ 1.2 THz OK", "Memory Check: 1024 PB OK", "Entanglement Drive: CONNECTED", "Initializing Neural Interface...", "Loading Temporal Kernel..."];
         let i = 0;
         const interval = setInterval(() => {
-            if (i < lines.length) {
+            const container = document.getElementById('bios-lines');
+            if (container && i < lines.length) {
                 const div = document.createElement('div');
                 div.textContent = lines[i++];
-                document.getElementById('bios-lines').appendChild(div);
+                container.appendChild(div);
             } else {
                 clearInterval(interval);
-                setTimeout(() => this.showBoot(), 1000);
+                window.removeEventListener('keydown', handleTab);
+                if (container) setTimeout(() => this.showBoot(), 1000);
             }
         }, 150);
+
+        const handleTab = (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                clearInterval(interval);
+                window.removeEventListener('keydown', handleTab);
+                this.showBIOSSettings();
+            }
+        };
+        window.addEventListener('keydown', handleTab);
+    }
+
+    showBIOSSettings() {
+        this.container.innerHTML = `
+            <div class="fixed inset-0 bg-[#0000AA] text-white font-mono p-0 z-50 flex flex-col border-[12px] border-[#AAAAAA] shadow-2xl">
+                <div class="bg-[#AAAAAA] text-[#0000AA] p-1 text-center font-bold text-sm">QUANTUM BIOS SETUP UTILITY - COPYRIGHT (C) 19584 AMERICAN MEGATRENDS</div>
+                <div class="flex-1 flex overflow-hidden">
+                    <div class="w-1/4 border-r-2 border-white p-4 space-y-1 text-sm">
+                        <div class="bg-white text-[#0000AA] px-2 font-bold">Main</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Advanced</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Holographics</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Temporal</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Security</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Boot</div>
+                        <div class="px-2 hover:bg-white/20 cursor-pointer">Exit</div>
+                    </div>
+                    <div class="flex-1 p-8 space-y-6 flex flex-col">
+                        <div class="space-y-4 flex-1">
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>System Time</span><span class="text-[#FFFF55]">[${new Date().toLocaleTimeString()}]</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>System Date</span><span class="text-[#FFFF55]">[${new Date().toLocaleDateString()}]</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>Quantum Core</span><span class="text-[#FFFF55]">[Enabled]</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>Multiverse Sync</span><span class="text-[#FFFF55]">[Aggressive]</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>Neural Buffer</span><span class="text-[#FFFF55]">[1024 PB]</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-2"><span>Temporal Security</span><span class="text-[#FFFF55]">[Level 9]</span></div>
+                        </div>
+                        <div class="p-4 border-2 border-white bg-black/20 text-[#55FFFF] text-xs leading-relaxed">
+                            <p class="font-bold mb-2">Item Help</p>
+                            <p>Select the neural link speed. Higher speeds may cause temporal displacement in local cluster. Use with caution.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#AAAAAA] text-[#0000AA] p-1 text-[10px] flex justify-around font-bold uppercase">
+                    <span>↑↓: Select</span>
+                    <span>Enter: Change</span>
+                    <span>F1: General Help</span>
+                    <span>F9: Setup Defaults</span>
+                    <span>F10: Save and Exit</span>
+                    <span>ESC: Exit</span>
+                </div>
+            </div>
+        `;
+        const handleExit = (e) => {
+            if (e.key === 'F10' || e.key === 'Escape' || e.key === 'Enter') {
+                e.preventDefault();
+                window.removeEventListener('keydown', handleExit);
+                this.showBoot();
+            }
+        };
+        window.addEventListener('keydown', handleExit);
     }
 
     showBoot() {
@@ -613,11 +683,26 @@ class OS {
     initIcons() {
         const desktop = document.getElementById('desktop-icons');
         const start = document.getElementById('start-apps');
-        this.am.apps.forEach(app => {
+
+        this.am.apps.forEach((app, index) => {
+            const pos = this.state.iconPositions[app.id] || { x: 40, y: 40 + index * 100 };
             const btn = document.createElement('button');
-            btn.className = 'flex flex-col items-center w-20 group outline-none';
-            btn.innerHTML = `<div class="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:border-blue-500/40 transition-all text-blue-400"><i data-lucide="${app.icon}" class="w-8 h-8"></i></div><span class="mt-2 text-[8px] font-bold text-white/40 uppercase tracking-widest group-hover:text-white">${app.name}</span>`;
-            btn.onclick = () => this.wm.open(app.id);
+            btn.id = `icon-${app.id}`;
+            btn.className = 'absolute flex flex-col items-center w-24 group outline-none cursor-grab active:cursor-grabbing';
+            btn.style.left = `${pos.x}px`;
+            btn.style.top = `${pos.y}px`;
+            btn.innerHTML = `
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:border-blue-500/40 group-hover:bg-blue-500/10 transition-all text-blue-400 pointer-events-none">
+                    <i data-lucide="${app.icon}" class="w-8 h-8"></i>
+                </div>
+                <span class="mt-2 text-[8px] font-bold text-white/40 uppercase tracking-widest group-hover:text-white text-center px-1 pointer-events-none drop-shadow-lg">${app.name}</span>
+            `;
+
+            btn.onmousedown = (e) => this.handleIconMouseDown(e, app.id);
+            btn.onclick = () => {
+                if (!btn.dataset.dragged) this.wm.open(app.id);
+                delete btn.dataset.dragged;
+            };
             desktop.appendChild(btn);
 
             const startBtn = document.createElement('button');
@@ -702,13 +787,47 @@ class OS {
         }
     }
 
+    handleIconMouseDown(e, appId) {
+        if (e.button !== 0) return;
+        const btn = document.getElementById(`icon-${appId}`);
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const initX = parseInt(btn.style.left);
+        const initY = parseInt(btn.style.top);
+        let moved = false;
+
+        const onMouseMove = (mE) => {
+            const dx = mE.clientX - startX;
+            const dy = mE.clientY - startY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+            btn.style.left = `${initX + dx}px`;
+            btn.style.top = `${initY + dy}px`;
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            if (moved) {
+                btn.dataset.dragged = 'true';
+                this.state.iconPositions[appId] = {
+                    x: parseInt(btn.style.left),
+                    y: parseInt(btn.style.top)
+                };
+                this.saveState();
+            }
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
     showDesktop() {
         this.container.innerHTML = `
             <div id="desktop" class="relative h-screen w-screen overflow-hidden bg-slate-950 font-sans select-none">
                 <div class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-slate-950 to-black"></div>
 
                 <!-- Icons -->
-                <div id="desktop-icons" class="relative z-10 p-10 flex flex-col gap-8 items-start"></div>
+                <div id="desktop-icons" class="absolute inset-0 z-10"></div>
 
                 <!-- Windows -->
                 <div id="windows-layer" class="absolute inset-0 pointer-events-none z-20"></div>
@@ -791,6 +910,9 @@ class OS {
         this.aura.init();
         this.initIcons();
         this.updateTime();
+
+        const desktopEl = document.getElementById('desktop');
+        desktopEl.oncontextmenu = (e) => this.showContextMenu(e);
         setInterval(() => this.updateTime(), 1000);
 
         // Restore windows from state
@@ -866,6 +988,52 @@ class OS {
         menu.innerHTML = `<div class="grid grid-cols-2 gap-2">${layouts.map(l => `<div onclick="window.os.wm.snap('${id}', '${l}')" class="w-10 h-10 border border-white/20 rounded hover:bg-blue-500/20 cursor-pointer"></div>`).join('')}</div>`;
         document.body.appendChild(menu);
         menu.onmouseleave = () => menu.remove();
+    }
+
+    showContextMenu(e) {
+        e.preventDefault();
+        const existing = document.getElementById('context-menu');
+        if (existing) existing.remove();
+
+        const menu = document.createElement('div');
+        menu.id = 'context-menu';
+        menu.className = 'fixed z-[1000] glass-mica border border-white/10 rounded-xl py-2 w-48 shadow-2xl animate-in fade-in zoom-in-95 duration-100';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+
+        const items = [
+            { icon: 'refresh-cw', label: 'Refresh Nexus', action: () => location.reload() },
+            { icon: 'plus', label: 'New Node', action: () => this.showNotification('System', 'Creating new neural node...') },
+            { icon: 'monitor', label: 'Display Settings', action: () => this.wm.open('system') },
+            { icon: 'palette', label: 'Personalize', action: () => this.showNotification('Personalization', 'Neural themes coming soon.') },
+            { icon: 'info', label: 'System Info', action: () => this.wm.open('system') }
+        ];
+
+        menu.innerHTML = items.map(item => `
+            <div class="px-4 py-2 hover:bg-white/10 flex items-center gap-3 cursor-pointer group context-item">
+                <i data-lucide="${item.icon}" class="w-4 h-4 text-white/40 group-hover:text-blue-400"></i>
+                <span class="text-[10px] uppercase tracking-widest text-white/80">${item.label}</span>
+            </div>
+        `).join('');
+
+        document.body.appendChild(menu);
+        lucide.createIcons();
+
+        const itemDivs = menu.querySelectorAll('.context-item');
+        itemDivs.forEach((div, i) => {
+            div.onclick = () => {
+                items[i].action();
+                menu.remove();
+            };
+        });
+
+        const closeMenu = (clickE) => {
+            if (!menu.contains(clickE.target)) {
+                menu.remove();
+                document.removeEventListener('mousedown', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('mousedown', closeMenu), 10);
     }
 }
 
