@@ -142,6 +142,9 @@
 
 .window.interacting {
     transition: none !important;
+    border-color: rgba(59, 130, 246, 0.8) !important;
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) !important;
+    opacity: 0.9 !important;
 }
 
 .context-menu {
