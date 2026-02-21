@@ -226,28 +226,54 @@ function startDesktop() {
             </div>
 
             <!-- Taskbar -->
-            <div class="absolute bottom-0 left-0 right-0 h-16 taskbar-glass flex items-center justify-between px-6 z-50">
-                <div class="flex items-center h-full space-x-2">
-                    <button id="start-btn" class="h-11 w-11 flex items-center justify-center rounded-xl transition-all shadow-lg bg-white/5 border border-white/5 hover:bg-white/10 text-blue-400">
-                        <i data-lucide="layout" class="w-6 h-6"></i>
-                    </button>
-                    <div class="h-8 w-px bg-white/10 mx-4"></div>
-                    <div id="taskbar-apps" class="flex items-center space-x-2"></div>
-                </div>
+            <div class="absolute bottom-0 left-0 right-0 h-18 flex items-end justify-center pb-2 z-50">
+                <div class="taskbar-glass taskbar-centered h-16 flex items-center justify-between px-4">
+                    <div class="flex items-center space-x-1">
+                        <button id="start-btn" class="h-12 w-12 flex items-center justify-center rounded-xl transition-all hover:bg-white/10 text-blue-400 group">
+                            <i data-lucide="layout" class="w-6 h-6 group-hover:scale-110"></i>
+                        </button>
+                        <button id="aura-btn" class="h-12 w-12 flex items-center justify-center rounded-xl transition-all hover:bg-white/10 text-purple-400 group">
+                            <i data-lucide="sparkles" class="w-6 h-6 group-hover:scale-110"></i>
+                        </button>
+                        <button id="taskview-btn" class="h-12 w-12 flex items-center justify-center rounded-xl transition-all hover:bg-white/10 text-green-400 group">
+                            <i data-lucide="layers" class="w-6 h-6 group-hover:scale-110"></i>
+                        </button>
+                        <button id="biolink-btn" class="h-12 w-12 flex items-center justify-center rounded-xl transition-all hover:bg-white/10 text-red-400 group">
+                            <i data-lucide="fingerprint" class="w-6 h-6 group-hover:scale-110"></i>
+                        </button>
+                        <div class="h-8 w-px bg-white/10 mx-2"></div>
+                        <div id="taskbar-apps" class="flex items-center space-x-1"></div>
+                    </div>
 
-                <div class="flex items-center space-x-8">
-                    <div class="flex items-center space-x-5 text-white/40">
-                        <i data-lucide="wifi" class="w-4.5 h-4.5"></i>
-                        <i data-lucide="battery" class="w-4.5 h-4.5 rotate-90"></i>
-                        <i data-lucide="search" class="w-4.5 h-4.5 cursor-pointer"></i>
-                    </div>
-                    <div class="flex items-center space-x-4 pl-4 border-l border-white/10">
-                        <div class="flex flex-col items-end font-mono">
-                            <span id="taskbar-time" class="text-xs text-blue-100 font-bold tracking-widest">00:00:00</span>
-                            <span id="taskbar-date" class="text-[9px] text-white/30 uppercase tracking-tighter">00/00/19584</span>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3 text-white/40">
+                            <i data-lucide="wifi" class="w-4 h-4 cursor-pointer hover:text-white" onclick="showNotification('Entanglement Status', 'Connected to Universal-Net Node 04. Signal: 1.2 Petabit/s')"></i>
+                            <i data-lucide="volume-2" class="w-4 h-4 cursor-pointer hover:text-white" onclick="showNotification('Neural Audio', 'Output: Direct Cortical Interface. Volume: 40%')"></i>
                         </div>
-                        <div class="w-1 h-10 bg-blue-500/20 rounded-full"></div>
+                        <div class="flex flex-col items-center font-mono cursor-pointer hover:bg-white/5 px-2 py-1 rounded-lg transition-all" id="tray-clock" onclick="showNotification('Temporal Calendar', 'No anomalies scheduled for the next 24 solar cycles.')">
+                            <span id="taskbar-time" class="text-[11px] text-blue-100 font-bold">00:00</span>
+                            <span id="taskbar-date" class="text-[8px] text-white/30 uppercase tracking-tighter">00/00/19584</span>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Aura Sidebar -->
+            <div id="aura-sidebar" class="fixed top-4 right-4 bottom-24 w-80 glass border border-purple-500/20 rounded-3xl z-[55] translate-x-[400px] transition-transform duration-500 flex flex-col overflow-hidden shadow-2xl">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-purple-500/10 to-blue-500/10">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                        <span class="text-sm font-semibold tracking-widest uppercase text-white">Aura AI</span>
+                    </div>
+                    <button id="close-aura" class="text-white/40 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div id="aura-chat" class="flex-1 p-6 overflow-auto custom-scrollbar space-y-4">
+                    <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 text-xs text-white/80 leading-relaxed">
+                        Greetings, Quantum Traveler. I am Aura, your temporal intelligence. How can I assist your journey through the 196th century today?
+                    </div>
+                </div>
+                <div class="p-4 bg-white/5 border-t border-white/5">
+                    <input type="text" id="aura-input" placeholder="Ask Aura anything..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500/50 outline-none transition-all">
                 </div>
             </div>
         </div>
@@ -262,7 +288,9 @@ const appDefinitions = [
     { id: 'calc', name: 'QuantumCalc', icon: 'calculator' },
     { id: 'galaxy', name: 'Galactic Browser', icon: 'globe' },
     { id: 'explorer', name: 'OmniExplorer', icon: 'folder' },
-    { id: 'system', name: 'System Core', icon: 'settings' }
+    { id: 'system', name: 'System Core', icon: 'settings' },
+    { id: 'legacy', name: 'Legacy Suite', icon: 'history' },
+    { id: 'holomaker', name: 'Holo-Maker', icon: 'clapperboard' }
 ];
 
 function initDesktop() {
@@ -305,10 +333,66 @@ function initDesktop() {
     // Start Button
     document.getElementById('start-btn').onclick = toggleStartMenu;
 
+    // Aura Button
+    const auraBtn = document.getElementById('aura-btn');
+    const auraSidebar = document.getElementById('aura-sidebar');
+    auraBtn.onclick = () => {
+        const isClosed = auraSidebar.classList.contains('translate-x-[400px]');
+        if (isClosed) {
+            auraSidebar.classList.remove('translate-x-[400px]');
+            auraBtn.classList.add('bg-purple-600/30', 'border-purple-500/50');
+        } else {
+            auraSidebar.classList.add('translate-x-[400px]');
+            auraBtn.classList.remove('bg-purple-600/30', 'border-purple-500/50');
+        }
+    };
+    document.getElementById('close-aura').onclick = () => {
+        auraSidebar.classList.add('translate-x-[400px]');
+        auraBtn.classList.remove('bg-purple-600/30', 'border-purple-500/50');
+    };
+
+    // Task View Button
+    document.getElementById('biolink-btn').onclick = () => {
+        showNotification("Bio-Link", "Biometric signature verified. Neural interface synchronized.");
+        const btn = document.getElementById('biolink-btn');
+        btn.classList.add('animate-pulse', 'text-red-500');
+        setTimeout(() => btn.classList.remove('animate-pulse', 'text-red-500'), 2000);
+    };
+
+    document.getElementById('taskview-btn').onclick = () => {
+        showNotification("Task View", "Switching to multi-dimensional workspace overview.");
+        // Visual effect: zoom out windows?
+        const desktop = document.getElementById('desktop');
+        desktop.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        desktop.style.transform = 'scale(0.9) perspective(1000px) rotateX(5deg)';
+        setTimeout(() => {
+            desktop.style.transform = 'scale(1) rotateX(0)';
+        }, 1000);
+    };
+
+    // Aura Input
+    const auraInput = document.getElementById('aura-input');
+    auraInput.onkeydown = (e) => {
+        if (e.key === 'Enter' && auraInput.value.trim()) {
+            addAuraMessage(auraInput.value);
+            const userVal = auraInput.value.toLowerCase();
+            auraInput.value = '';
+
+            setTimeout(() => {
+                let response = "I have analyzed your request. Processing temporal data...";
+                if (userVal.includes('time')) response = "Current stardate is 19584. Temporal stability is holding at 99.9%.";
+                if (userVal.includes('hello')) response = "Greetings. How may I optimize your workflow today?";
+                if (userVal.includes('weather')) response = "Atmospheric conditions on Mars: Clear, -45°C. Earth: Hyper-storm in sector 4.";
+                if (userVal.includes('shutdown')) response = "Power cycles are reserved for high-priority maintenance. Use the start menu for local termination.";
+                addAuraMessage(response, true);
+            }, 1000);
+        }
+    };
+
     // Time & Date in Taskbar
     const updateTaskbarTime = () => {
         const now = new Date();
-        document.getElementById('taskbar-time').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('taskbar-time').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         document.getElementById('taskbar-date').textContent = now.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + '/19584';
     };
     updateTaskbarTime();
@@ -319,6 +403,99 @@ function initDesktop() {
         osContainer.innerHTML = '';
         setTimeout(startLogin, 500);
     };
+
+    // Context Menu
+    document.getElementById('desktop').oncontextmenu = (e) => {
+        e.preventDefault();
+        showContextMenu(e.clientX, e.clientY, [
+            { label: 'View', icon: 'eye' },
+            { label: 'Sort by', icon: 'list-filter' },
+            { label: 'Refresh', icon: 'refresh-cw', action: () => showNotification("System Refreshed", "Temporal cache cleared.") },
+            { label: 'Temporal Rollback', icon: 'rotate-ccw', action: () => {
+                showNotification("System Restore", "Initiating temporal rollback to previous stable state...");
+                document.getElementById('desktop').style.filter = 'grayscale(1) brightness(0.5)';
+                setTimeout(() => {
+                    document.getElementById('desktop').style.filter = 'none';
+                    showNotification("Restore Complete", "System restored to 19584-10-23 04:00.");
+                }, 2000);
+            }},
+            { label: 'New', icon: 'plus' },
+            { label: 'Personalize', icon: 'palette' },
+            { label: 'Open Terminal', icon: 'terminal', action: () => showNotification("Access Denied", "Neural link required.") }
+        ]);
+    };
+
+    document.onclick = () => {
+        const menu = document.querySelector('.context-menu');
+        if (menu) menu.remove();
+    };
+
+    // Random PnP Event
+    setTimeout(() => {
+        showNotification("Plug & Play", "New Quantum Drive detected. Driver 'Q-DRV-9000' installed successfully.");
+    }, 15000);
+}
+
+function addAuraMessage(text, isAI = false) {
+    const chat = document.getElementById('aura-chat');
+    const msg = document.createElement('div');
+    msg.className = isAI
+        ? "bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 text-xs text-white/80 leading-relaxed"
+        : "bg-purple-600/20 p-4 rounded-2xl rounded-tr-none border border-purple-500/20 text-xs text-white/80 leading-relaxed ml-8";
+    msg.textContent = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function showNotification(title, text) {
+    const toast = document.createElement('div');
+    toast.className = 'notification-toast';
+    toast.innerHTML = `
+        <div class="flex items-start space-x-4">
+            <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+                <i data-lucide="info" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+                <div class="text-xs font-bold text-white mb-1">${title}</div>
+                <div class="text-[10px] text-white/60 leading-relaxed">${text}</div>
+            </div>
+        </div>
+    `;
+    document.getElementById('desktop').appendChild(toast);
+    lucide.createIcons();
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500);
+    }, 5000);
+}
+
+function showContextMenu(x, y, items) {
+    const existing = document.querySelector('.context-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'context-menu-item';
+        el.innerHTML = `
+            <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+            <span>${item.label}</span>
+        `;
+        el.onclick = (e) => {
+            e.stopPropagation();
+            if (item.action) item.action();
+            menu.remove();
+        };
+        menu.appendChild(el);
+    });
+
+    document.getElementById('desktop').appendChild(menu);
+    lucide.createIcons();
 }
 
 function openWindow(appId) {
@@ -410,6 +587,14 @@ function openWindow(appId) {
         toggleMaximize(winId);
     };
 
+    maxBtn.onmouseenter = () => showSnapLayouts(winId, maxBtn);
+    maxBtn.onmouseleave = (e) => {
+        const menu = document.querySelector('.snap-layouts-menu');
+        if (menu && !menu.contains(e.relatedTarget)) {
+            menu.remove();
+        }
+    };
+
     const minBtn = winEl.querySelector('.minimize-btn');
     minBtn.onmousedown = stopProps;
     minBtn.onclick = (e) => {
@@ -446,6 +631,8 @@ function toggleMaximize(id) {
     if (!win || !winEl) return;
 
     win.isMaximized = !win.isMaximized;
+    winEl.classList.remove('snap-left', 'snap-right');
+
     if (win.isMaximized) {
         winEl.classList.add('maximized');
         winEl.querySelector('.maximize-btn i').setAttribute('data-lucide', 'minimize-2');
@@ -454,6 +641,69 @@ function toggleMaximize(id) {
         winEl.querySelector('.maximize-btn i').setAttribute('data-lucide', 'maximize-2');
     }
     lucide.createIcons();
+}
+
+function snapWindow(id, side) {
+    const win = state.windows.find(w => w.id === id);
+    const winEl = document.getElementById(`window-${id}`);
+    if (!win || !winEl) return;
+
+    win.isMaximized = false;
+    winEl.classList.remove('maximized', 'snap-left', 'snap-right');
+    winEl.classList.add(`snap-${side}`);
+    winEl.querySelector('.maximize-btn i').setAttribute('data-lucide', 'maximize-2');
+    lucide.createIcons();
+}
+
+function showSnapLayouts(id, btn) {
+    const rect = btn.getBoundingClientRect();
+    const menu = document.createElement('div');
+    menu.className = 'snap-layouts-menu fixed z-[1000] glass p-2 rounded-xl border border-white/10 flex space-x-2 shadow-2xl';
+    menu.style.top = `${rect.bottom + 10}px`;
+    menu.style.left = `${rect.left - 40}px`;
+
+    menu.innerHTML = `
+        <div class="w-12 h-12 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 cursor-pointer flex" id="snap-l">
+            <div class="w-1/2 h-full bg-blue-500/20 border-r border-blue-500/30"></div>
+        </div>
+        <div class="w-12 h-12 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 cursor-pointer flex" id="snap-r">
+            <div class="w-1/2 h-full ml-auto bg-blue-500/20 border-l border-blue-500/30"></div>
+        </div>
+    `;
+
+    document.body.appendChild(menu);
+
+    const preview = document.getElementById('snap-preview');
+
+    menu.querySelector('#snap-l').onmouseenter = () => {
+        preview.style.opacity = '1';
+        preview.style.left = '0';
+        preview.style.top = '0';
+        preview.style.width = '50vw';
+        preview.style.height = 'calc(100vh - 72px)';
+    };
+    menu.querySelector('#snap-r').onmouseenter = () => {
+        preview.style.opacity = '1';
+        preview.style.left = '50vw';
+        preview.style.top = '0';
+        preview.style.width = '50vw';
+        preview.style.height = 'calc(100vh - 72px)';
+    };
+    menu.onmouseleave = () => {
+        preview.style.opacity = '0';
+        menu.remove();
+    };
+
+    menu.querySelector('#snap-l').onclick = () => {
+        snapWindow(id, 'left');
+        menu.remove();
+        preview.style.opacity = '0';
+    };
+    menu.querySelector('#snap-r').onclick = () => {
+        snapWindow(id, 'right');
+        menu.remove();
+        preview.style.opacity = '0';
+    };
 }
 
 function toggleMinimize(id) {
@@ -589,6 +839,18 @@ function updateTaskbarApps() {
                 focusWindow(win.id);
             }
         };
+
+        item.onmouseenter = () => {
+            document.querySelectorAll('.window').forEach(w => {
+                if (w.id !== `window-${win.id}`) w.style.opacity = '0.2';
+            });
+        };
+        item.onmouseleave = () => {
+            document.querySelectorAll('.window').forEach(w => {
+                w.style.opacity = '1';
+            });
+        };
+
         container.appendChild(item);
     });
     lucide.createIcons();
@@ -659,25 +921,121 @@ function renderWindowContent(id) {
             break;
         case 'explorer':
             container.innerHTML = `
-                <div class="flex flex-col h-full">
-                    <div class="flex items-center space-x-6 mb-8 text-[10px] uppercase tracking-widest text-white/40">
-                        <span class="text-blue-400 border-b-2 border-blue-400 pb-1 cursor-pointer">Quick Access</span>
-                        <span class="cursor-pointer hover:text-white transition-colors">Neural Vault</span>
-                        <span class="cursor-pointer hover:text-white transition-colors">Star-Drive</span>
+                <div class="flex flex-col h-full -m-6">
+                    <div class="flex items-center space-x-4 bg-white/5 p-4 border-b border-white/10">
+                        <div class="flex space-x-2">
+                            <button class="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+                            <button class="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-1.5 text-[10px] text-white/60 flex items-center space-x-2">
+                            <i data-lucide="folder" class="w-3 h-3"></i>
+                            <span>This Quantum Computer > Neural Vault > Documents</span>
+                        </div>
+                        <div class="w-48 bg-black/40 border border-white/10 rounded-lg px-4 py-1.5 text-[10px] text-white/40 flex items-center justify-between">
+                            <span>Search Documents</span>
+                            <i data-lucide="search" class="w-3 h-3"></i>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-4 gap-8">
-                        <div class="flex flex-col items-center space-y-3 group cursor-pointer">
-                            <div class="p-5 bg-white/5 rounded-2xl group-hover:bg-blue-600/20 border border-white/5 group-hover:border-blue-500/40 transition-all shadow-lg">
-                                <i data-lucide="folder" class="w-12 h-12 text-blue-400/80"></i>
-                            </div>
-                            <span class="text-[10px] text-white/70 text-center uppercase tracking-tighter">Neural-Vault</span>
+                    <div class="flex flex-1 overflow-hidden">
+                        <div class="w-48 border-r border-white/10 p-4 space-y-2 overflow-auto custom-scrollbar">
+                            <div class="text-[9px] uppercase tracking-widest text-white/20 mb-4 px-2">Favorites</div>
+                            <div class="flex items-center space-x-3 p-2 bg-blue-500/10 text-blue-400 rounded-lg text-xs cursor-pointer"><i data-lucide="star" class="w-4 h-4"></i><span>Quick Access</span></div>
+                            <div class="flex items-center space-x-3 p-2 hover:bg-white/5 text-white/60 rounded-lg text-xs cursor-pointer"><i data-lucide="clock" class="w-4 h-4"></i><span>Recent</span></div>
+                            <div class="flex items-center space-x-3 p-2 hover:bg-white/5 text-white/60 rounded-lg text-xs cursor-pointer"><i data-lucide="download" class="w-4 h-4"></i><span>Downloads</span></div>
+                            <div class="mt-8 text-[9px] uppercase tracking-widest text-white/20 mb-4 px-2">Libraries</div>
+                            <div class="flex items-center space-x-3 p-2 hover:bg-white/5 text-white/60 rounded-lg text-xs cursor-pointer"><i data-lucide="image" class="w-4 h-4"></i><span>Holo-Grams</span></div>
+                            <div class="flex items-center space-x-3 p-2 hover:bg-white/5 text-white/60 rounded-lg text-xs cursor-pointer"><i data-lucide="music" class="w-4 h-4"></i><span>Neural-Audio</span></div>
+                            <div class="flex items-center space-x-3 p-2 hover:bg-white/5 text-white/60 rounded-lg text-xs cursor-pointer"><i data-lucide="video" class="w-4 h-4"></i><span>Temporal-Vids</span></div>
                         </div>
-                        <div class="flex flex-col items-center space-y-3 group cursor-pointer">
-                            <div class="p-5 bg-white/5 rounded-2xl group-hover:bg-blue-600/20 border border-white/5 group-hover:border-blue-500/40 transition-all shadow-lg">
-                                <i data-lucide="file-text" class="w-12 h-12 text-purple-400/80"></i>
-                            </div>
-                            <span class="text-[10px] text-white/70 text-center uppercase tracking-tighter">Manifest.ion</span>
+                        <div class="flex-1 p-8 grid grid-cols-4 content-start gap-8 overflow-auto custom-scrollbar" id="explorer-files">
+                            <!-- Files -->
                         </div>
+                    </div>
+                </div>
+            `;
+            const files = [
+                { name: 'Quantum_Physics_Final_Project_Revised_v42.holo', icon: 'file-text', color: 'text-blue-400' },
+                { name: 'Stargate_Coordinates_Sector_7G.map', icon: 'map', color: 'text-green-400' },
+                { name: 'Grand_Canyon_Mars_Vacation_2104.pic', icon: 'image', color: 'text-purple-400' },
+                { name: 'Encrypted_Neural_Key.vault', icon: 'lock', color: 'text-red-400' },
+                { name: 'Legacy_Windows_11_Simulator_Source.zip', icon: 'archive', color: 'text-yellow-400' },
+                { name: 'Universal_Universal_Universal_Universal_Long_Filename_Test.txt', icon: 'file', color: 'text-white/40' }
+            ];
+            const fileContainer = container.querySelector('#explorer-files');
+            files.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'flex flex-col items-center space-y-2 group cursor-pointer text-center';
+                div.innerHTML = `
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/5 group-hover:border-blue-500/40 group-hover:bg-blue-600/10 transition-all ${file.color}">
+                        <i data-lucide="${file.icon}" class="w-10 h-10"></i>
+                    </div>
+                    <span class="text-[10px] text-white/60 group-hover:text-white truncate w-24">${file.name}</span>
+                `;
+                div.onclick = () => showNotification("File Opened", `Successfully synchronized ${file.name} with neural link.`);
+                fileContainer.appendChild(div);
+            });
+            lucide.createIcons();
+            break;
+        case 'holomaker':
+            container.innerHTML = `
+                <div class="flex flex-col h-full space-y-4">
+                    <div class="h-48 bg-black/60 rounded-2xl border border-white/5 relative overflow-hidden flex items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 animate-pulse"></div>
+                        <i data-lucide="play" class="w-12 h-12 text-white/20"></i>
+                        <div class="absolute bottom-4 left-4 right-4 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full bg-purple-500 w-1/3"></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 cursor-pointer transition-all">
+                            <div class="text-xs font-bold mb-1 uppercase tracking-widest text-purple-400">Generative Erase</div>
+                            <p class="text-[10px] text-white/40">Remove temporal anomalies from your holos.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 cursor-pointer transition-all">
+                            <div class="text-xs font-bold mb-1 uppercase tracking-widest text-blue-400">Neural Sync</div>
+                            <p class="text-[10px] text-white/40">Overlay neural imprints on the timeline.</p>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-white/5 flex items-center justify-between">
+                        <div class="flex space-x-2">
+                            <i data-lucide="video" class="w-4 h-4 text-white/40"></i>
+                            <span class="text-[10px] text-white/40 uppercase tracking-widest">Temporal-Stream-01.hvx</span>
+                        </div>
+                        <button class="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 rounded-lg text-[10px] uppercase tracking-widest text-white transition-all">Render</button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            break;
+        case 'legacy':
+            container.innerHTML = `
+                <div class="flex flex-col h-full -m-6 bg-[#c0c0c0] text-black font-sans p-1 border-2 border-white shadow-[inset_-1px_-1px_#808080,inset_1px_1px_#ffffff]">
+                    <div class="bg-[#000080] p-1 flex justify-between items-center text-white font-bold text-xs">
+                        <div class="flex items-center space-x-1"><i data-lucide="globe" class="w-3 h-3"></i><span>Internet Explorer 584</span></div>
+                    </div>
+                    <div class="flex-1 bg-white border-2 border-[#808080] m-1 p-4 space-y-4 overflow-auto text-sm">
+                        <div class="flex items-center space-x-4 border-b pb-2">
+                            <i data-lucide="user-plus" class="w-8 h-8 text-blue-800"></i>
+                            <div>
+                                <h3 class="font-bold">NetMeeting v19.5</h3>
+                                <p class="text-[10px]">Connected to: 127.0.0.1 (Quantum Loopback)</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                            <h4 class="font-bold mb-2">Welcome to the Universal-Net</h4>
+                            <p class="text-xs">Your connection is shared via Internet Connection Sharing (ICS). Multi-monitor support is active.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="font-bold">Retro Search:</p>
+                            <div class="flex space-x-2">
+                                <input type="text" class="border p-1 flex-1 text-xs" value="altavista.com">
+                                <button class="bg-[#c0c0c0] border-2 border-white shadow-[inset_-1px_-1px_#808080,inset_1px_1px_#ffffff] px-4 text-xs">Go</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center p-10">
+                            <i data-lucide="construction" class="w-12 h-12 text-yellow-600"></i>
+                        </div>
+                        <p class="text-center text-[10px] text-gray-500 italic">"It's like the 1990s, but with more qubits."</p>
                     </div>
                 </div>
             `;

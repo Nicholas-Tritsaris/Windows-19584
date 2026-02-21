@@ -33,9 +33,20 @@
 }
 
 .taskbar-glass {
-    background: rgba(2, 6, 23, 0.8);
-    backdrop-filter: blur(30px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(40px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+}
+
+.taskbar-centered {
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 400px;
+    max-width: 90vw;
+    border-radius: 20px 20px 0 0;
+    padding: 0 12px;
 }
 
 /* BIOS typing cursor */
@@ -73,7 +84,23 @@
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
-    height: calc(100vh - 64px) !important;
+    height: calc(100vh - 72px) !important;
+    border-radius: 0 !important;
+}
+
+.window.snap-left {
+    top: 0 !important;
+    left: 0 !important;
+    width: 50vw !important;
+    height: calc(100vh - 72px) !important;
+    border-radius: 0 !important;
+}
+
+.window.snap-right {
+    top: 0 !important;
+    left: 50vw !important;
+    width: 50vw !important;
+    height: calc(100vh - 72px) !important;
     border-radius: 0 !important;
 }
 
@@ -83,6 +110,64 @@
 
 .window.interacting {
     transition: none !important;
+}
+
+.context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 220px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.context-menu-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s;
+}
+
+.context-menu-item:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: white;
+}
+
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 16px;
+    padding: 16px;
+    z-index: 10000;
+    transform: translateX(400px);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.notification-toast.show {
+    transform: translateX(0);
+}
+
+.snap-preview {
+    position: fixed;
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    z-index: 9999;
+    pointer-events: none;
+    transition: all 0.2s;
+    opacity: 0;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
