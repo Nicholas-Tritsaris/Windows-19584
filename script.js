@@ -154,7 +154,13 @@ function startLogin() {
         const timeEl = document.getElementById('login-time');
         const dateEl = document.getElementById('login-date');
         if (timeEl) timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        if (dateEl) dateEl.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).replace('2025', '19584'); // Mock year
+
+        if (dateEl) {
+            const dayName = now.toLocaleDateString([], { weekday: 'long' });
+            const monthName = now.toLocaleDateString([], { month: 'long' });
+            const day = now.getDate();
+            dateEl.textContent = `${dayName}, ${monthName} ${day}, 19584`;
+        }
     };
     updateTime();
     const timeInterval = setInterval(updateTime, 1000);
@@ -316,8 +322,13 @@ function initDesktop() {
 }
 
 function openWindow(appId) {
-    if (state.windows.find(w => w.id === appId)) {
-        focusWindow(appId);
+    const existing = state.windows.find(w => w.id === appId);
+    if (existing) {
+        if (existing.isMinimized) {
+            toggleMinimize(appId);
+        } else {
+            focusWindow(appId);
+        }
         return;
     }
 
@@ -328,38 +339,44 @@ function openWindow(appId) {
         id: winId,
         x: 250 + offset,
         y: 100 + offset,
-        isMinimized: false
+        width: 640,
+        height: 440,
+        isMinimized: false,
+        isMaximized: false
     };
     state.windows.push(winState);
 
     const winEl = document.createElement('div');
     winEl.id = `window-${winId}`;
-    winEl.className = 'window absolute w-[640px] h-[440px] bg-slate-900/90 backdrop-blur-3xl border border-blue-500/30 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto transition-opacity duration-300';
+    winEl.className = 'window absolute bg-slate-900/90 backdrop-blur-3xl border border-blue-500/30 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto transition-all duration-300';
     winEl.style.left = `${winState.x}px`;
     winEl.style.top = `${winState.y}px`;
+    winEl.style.width = `${winState.width}px`;
+    winEl.style.height = `${winState.height}px`;
     winEl.style.zIndex = 100;
 
     winEl.innerHTML = `
         <div class="window-header h-12 bg-white/5 flex items-center justify-between px-4 cursor-move border-b border-white/10">
-            <div class="flex items-center space-x-3 text-blue-400">
+            <div class="flex items-center space-x-3 text-blue-400 pointer-events-none">
                 <i data-lucide="${app.icon}" class="w-5 h-5"></i>
                 <span class="text-xs font-semibold tracking-widest uppercase">${app.name}</span>
             </div>
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 cursor-pointer text-white/60">
+            <div class="flex items-center space-x-1">
+                <button class="minimize-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 cursor-pointer text-white/60 transition-colors">
                     <i data-lucide="minus" class="w-4 h-4"></i>
-                </div>
-                <div class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 cursor-pointer text-white/60">
+                </button>
+                <button class="maximize-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 cursor-pointer text-white/60 transition-colors">
                     <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                </div>
-                <div class="close-btn w-8 h-8 flex items-center justify-center rounded hover:bg-red-500/80 cursor-pointer text-white/60 hover:text-white transition-colors">
+                </button>
+                <button class="close-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-500/80 cursor-pointer text-white/60 hover:text-white transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
-                </div>
+                </button>
             </div>
         </div>
         <div class="window-content flex-1 p-6 text-white overflow-auto custom-scrollbar">
             <!-- Content will be injected here -->
         </div>
+        <div class="resize-handle"></div>
     `;
 
     document.getElementById('windows-layer').appendChild(winEl);
@@ -372,11 +389,39 @@ function openWindow(appId) {
     winEl.onmousedown = () => focusWindow(winId);
 
     const header = winEl.querySelector('.window-header');
-    header.onmousedown = (e) => startDrag(e, winId);
+    header.onmousedown = (e) => {
+        if (winState.isMaximized) return;
+        startDrag(e, winId);
+    };
 
-    winEl.querySelector('.close-btn').onclick = (e) => {
+    const stopProps = (e) => e.stopPropagation();
+
+    const closeBtn = winEl.querySelector('.close-btn');
+    closeBtn.onmousedown = stopProps;
+    closeBtn.onclick = (e) => {
         e.stopPropagation();
         closeWindow(winId);
+    };
+
+    const maxBtn = winEl.querySelector('.maximize-btn');
+    maxBtn.onmousedown = stopProps;
+    maxBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleMaximize(winId);
+    };
+
+    const minBtn = winEl.querySelector('.minimize-btn');
+    minBtn.onmousedown = stopProps;
+    minBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleMinimize(winId);
+    };
+
+    const resizeHandle = winEl.querySelector('.resize-handle');
+    resizeHandle.onmousedown = (e) => {
+        e.stopPropagation();
+        if (winState.isMaximized) return;
+        startResize(e, winId);
     };
 
     updateTaskbarApps();
@@ -395,7 +440,45 @@ function closeWindow(id) {
     }
 }
 
+function toggleMaximize(id) {
+    const win = state.windows.find(w => w.id === id);
+    const winEl = document.getElementById(`window-${id}`);
+    if (!win || !winEl) return;
+
+    win.isMaximized = !win.isMaximized;
+    if (win.isMaximized) {
+        winEl.classList.add('maximized');
+        winEl.querySelector('.maximize-btn i').setAttribute('data-lucide', 'minimize-2');
+    } else {
+        winEl.classList.remove('maximized');
+        winEl.querySelector('.maximize-btn i').setAttribute('data-lucide', 'maximize-2');
+    }
+    lucide.createIcons();
+}
+
+function toggleMinimize(id) {
+    const win = state.windows.find(w => w.id === id);
+    const winEl = document.getElementById(`window-${id}`);
+    if (!win || !winEl) return;
+
+    win.isMinimized = !win.isMinimized;
+    if (win.isMinimized) {
+        winEl.classList.add('minimized');
+        state.focusedWindowId = null;
+    } else {
+        winEl.classList.remove('minimized');
+        focusWindow(id);
+    }
+    updateTaskbarApps();
+}
+
 function focusWindow(id) {
+    const win = state.windows.find(w => w.id === id);
+    if (win && win.isMinimized) {
+        toggleMinimize(id);
+        return;
+    }
+
     state.focusedWindowId = id;
     document.querySelectorAll('.window').forEach(el => {
         el.style.zIndex = 30;
@@ -413,9 +496,11 @@ function focusWindow(id) {
 }
 
 let dragData = null;
+let resizeData = null;
 
 function startDrag(e, id) {
     const winEl = document.getElementById(`window-${id}`);
+    winEl.classList.add('interacting');
     dragData = {
         id,
         startX: e.clientX,
@@ -424,22 +509,62 @@ function startDrag(e, id) {
         initialY: parseInt(winEl.style.top)
     };
 
-    document.onmousemove = doDrag;
-    document.onmouseup = stopDrag;
+    document.onmousemove = doInteraction;
+    document.onmouseup = stopInteraction;
 }
 
-function doDrag(e) {
-    if (!dragData) return;
-    const winEl = document.getElementById(`window-${dragData.id}`);
-    const dx = e.clientX - dragData.startX;
-    const dy = e.clientY - dragData.startY;
+function startResize(e, id) {
+    const winEl = document.getElementById(`window-${id}`);
+    winEl.classList.add('interacting');
+    resizeData = {
+        id,
+        startX: e.clientX,
+        startY: e.clientY,
+        initialWidth: parseInt(winEl.style.width),
+        initialHeight: parseInt(winEl.style.height)
+    };
 
-    winEl.style.left = `${dragData.initialX + dx}px`;
-    winEl.style.top = `${dragData.initialY + dy}px`;
+    document.onmousemove = doInteraction;
+    document.onmouseup = stopInteraction;
 }
 
-function stopDrag() {
+function doInteraction(e) {
+    if (dragData) {
+        const win = state.windows.find(w => w.id === dragData.id);
+        const winEl = document.getElementById(`window-${dragData.id}`);
+        const dx = e.clientX - dragData.startX;
+        const dy = e.clientY - dragData.startY;
+
+        win.x = dragData.initialX + dx;
+        win.y = dragData.initialY + dy;
+        winEl.style.left = `${win.x}px`;
+        winEl.style.top = `${win.y}px`;
+    }
+
+    if (resizeData) {
+        const win = state.windows.find(w => w.id === resizeData.id);
+        const winEl = document.getElementById(`window-${resizeData.id}`);
+        const dx = e.clientX - resizeData.startX;
+        const dy = e.clientY - resizeData.startY;
+
+        win.width = Math.max(300, resizeData.initialWidth + dx);
+        win.height = Math.max(200, resizeData.initialHeight + dy);
+        winEl.style.width = `${win.width}px`;
+        winEl.style.height = `${win.height}px`;
+    }
+}
+
+function stopInteraction() {
+    if (dragData) {
+        const winEl = document.getElementById(`window-${dragData.id}`);
+        if (winEl) winEl.classList.remove('interacting');
+    }
+    if (resizeData) {
+        const winEl = document.getElementById(`window-${resizeData.id}`);
+        if (winEl) winEl.classList.remove('interacting');
+    }
     dragData = null;
+    resizeData = null;
     document.onmousemove = null;
     document.onmouseup = null;
 }
@@ -450,14 +575,20 @@ function updateTaskbarApps() {
 
     state.windows.forEach(win => {
         const app = appDefinitions.find(a => a.id === win.id);
-        const item = document.createElement('div');
+        const item = document.createElement('button');
         const isFocused = state.focusedWindowId === win.id;
-        item.className = `h-11 px-4 flex items-center space-x-3 rounded-xl transition-all cursor-pointer border ${isFocused ? 'bg-blue-600/20 border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`;
+        item.className = `h-11 px-4 flex items-center space-x-3 rounded-xl transition-all cursor-pointer border outline-none ${isFocused ? 'bg-blue-600/20 border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`;
         item.innerHTML = `
-            <div class="text-blue-400"><i data-lucide="${app.icon}" class="w-5 h-5"></i></div>
-            <div class="w-1 h-1 rounded-full bg-blue-400 shadow-[0_0_5px_#3b82f6]"></div>
+            <div class="text-blue-400 pointer-events-none"><i data-lucide="${app.icon}" class="w-5 h-5"></i></div>
+            <div class="w-1 h-1 rounded-full bg-blue-400 shadow-[0_0_5px_#3b82f6] pointer-events-none"></div>
         `;
-        item.onclick = () => focusWindow(win.id);
+        item.onclick = () => {
+            if (isFocused) {
+                toggleMinimize(win.id);
+            } else {
+                focusWindow(win.id);
+            }
+        };
         container.appendChild(item);
     });
     lucide.createIcons();
