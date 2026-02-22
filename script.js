@@ -572,6 +572,7 @@ class AuraAI {
 class OS {
     constructor() {
         this.audioCtx = null;
+        this.auth0 = null;
         this.container = document.getElementById('os-container');
         this.state = {
             stage: 'bios',
@@ -580,7 +581,9 @@ class OS {
             isStartOpen: false,
             calcValue: '0',
             holoPadContent: null,
-            iconPositions: {}
+            iconPositions: {},
+            isAuthenticated: false,
+            user: null
         };
         this.am = new AppManager(this);
         this.wm = new WindowManager(this);
@@ -588,7 +591,34 @@ class OS {
         this.loadState();
     }
 
-    start() {
+    async initAuth() {
+        try {
+            this.auth0 = await auth0.createAuth0Client({
+                domain: "blueboop.au.auth0.com",
+                clientId: "ISxQLGmTdgWfa6uB2Gs1BZryAz77sTgx",
+                authorizationParams: {
+                    redirect_uri: window.location.origin
+                }
+            });
+
+            const query = window.location.search;
+            if (query.includes("code=") && query.includes("state=")) {
+                await this.auth0.handleRedirectCallback();
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            this.state.isAuthenticated = await this.auth0.isAuthenticated();
+            if (this.state.isAuthenticated) {
+                this.state.user = await this.auth0.getUser();
+                console.log('User authenticated:', this.state.user);
+            }
+        } catch (e) {
+            console.error("Auth0 initialization failed", e);
+        }
+    }
+
+    async start() {
+        await this.initAuth();
         if (window.logToFirebase) window.logToFirebase('system_boot_start');
         this.showBIOS();
     }
@@ -739,21 +769,51 @@ class OS {
         setTimeout(() => this.showLogin(), 3000);
     }
 
+    async login() {
+        if (this.auth0) {
+            await this.auth0.loginWithRedirect();
+        } else {
+            this.showDesktop();
+        }
+    }
+
+    async logout() {
+        if (this.auth0) {
+            await this.auth0.logout({ logoutParams: { returnTo: window.location.origin } });
+        } else {
+            location.reload();
+        }
+    }
+
     showLogin() {
         if (window.logToFirebase) window.logToFirebase('login_screen_reached');
+
+        const user = this.state.user;
+        const name = user ? (user.name || user.nickname || 'Traveler') : 'Traveler';
+        const picture = user ? user.picture : null;
+
         this.container.innerHTML = `
             <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 transition-opacity duration-1000">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20"></div>
                 <div class="relative z-10 flex flex-col items-center">
-                    <div class="w-32 h-32 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-center mb-8 shadow-2xl">
-                        <i data-lucide="user" class="w-12 h-12 text-white/20"></i>
+                    <div class="w-32 h-32 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-center mb-8 shadow-2xl overflow-hidden">
+                        ${picture ? `<img src="${picture}" class="w-full h-full object-cover">` : `<i data-lucide="user" class="w-12 h-12 text-white/20"></i>`}
                     </div>
-                    <h1 class="text-2xl text-white font-light mb-10 tracking-[0.3em] uppercase">Traveler</h1>
-                    <button onclick="window.os.showDesktop()" class="px-10 py-3 bg-white/5 border border-white/10 rounded-full text-white text-xs tracking-widest hover:bg-white/10 transition-all uppercase active:scale-95">Link Neural Interface</button>
+                    <h1 class="text-2xl text-white font-light mb-10 tracking-[0.3em] uppercase">${name}</h1>
+                    ${this.state.isAuthenticated ?
+                        `<button onclick="window.os.showDesktop()" class="px-10 py-3 bg-blue-500/20 border border-blue-500/40 rounded-full text-white text-xs tracking-widest hover:bg-blue-500/30 transition-all uppercase active:scale-95 shadow-[0_0_20px_rgba(59,130,246,0.3)]">Enter Neural Interface</button>
+                         <button onclick="window.os.logout()" class="mt-4 text-[8px] text-white/20 hover:text-white/40 uppercase tracking-widest">Switch Identity</button>` :
+                        `<button onclick="window.os.login()" class="px-10 py-3 bg-white/5 border border-white/10 rounded-full text-white text-xs tracking-widest hover:bg-white/10 transition-all uppercase active:scale-95">Link Neural Interface</button>`
+                    }
                 </div>
             </div>
         `;
         lucide.createIcons();
+
+        // Auto-show desktop if coming back from redirect
+        if (this.state.isAuthenticated && window.location.search === "") {
+            // setTimeout(() => this.showDesktop(), 1500);
+        }
     }
 
     initIcons() {
@@ -803,6 +863,21 @@ class OS {
         const menu = document.getElementById('start-menu');
         this.state.isStartOpen = !this.state.isStartOpen;
         menu.classList.toggle('hidden');
+        if (!menu.classList.contains('hidden')) {
+            const user = this.state.user;
+            const name = user ? (user.name || user.nickname || 'Traveler') : 'Traveler';
+            const picture = user ? user.picture : null;
+            const userDisplay = menu.querySelector('.user-display-container');
+            if (userDisplay) {
+                userDisplay.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 overflow-hidden">
+                        ${picture ? `<img src="${picture}" class="w-full h-full object-cover">` : `<i data-lucide="user" class="w-4 h-4"></i>`}
+                    </div>
+                    <span class="text-[10px] font-bold tracking-widest uppercase">${name}</span>
+                `;
+                lucide.createIcons();
+            }
+        }
     }
 
     toggleAura() {
@@ -939,11 +1014,12 @@ class OS {
                         <div id="start-apps" class="grid grid-cols-4 gap-4"></div>
                     </div>
                     <div class="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 user-display-container">
                             <div class="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400"><i data-lucide="user" class="w-4 h-4"></i></div>
                             <span class="text-[10px] font-bold tracking-widest uppercase">Traveler</span>
                         </div>
                         <div class="flex gap-2">
+                            <button onclick="window.os.logout()" class="p-2 hover:bg-white/10 rounded-xl text-white/40" title="Sign Out"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                             <button onclick="localStorage.clear(); location.reload();" class="p-2 hover:bg-white/10 rounded-xl text-white/40" title="Clear System Cache"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                             <button onclick="location.reload()" class="p-2 hover:bg-red-500/20 rounded-xl text-red-500" title="Shut Down"><i data-lucide="power" class="w-4 h-4"></i></button>
                         </div>
