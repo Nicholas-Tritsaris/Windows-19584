@@ -7,6 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDi21XaltvjBrOiYp5Vs9JpbRhHliZluS0",
+            authDomain: "my-webpages-200a1.firebaseapp.com",
+            projectId: "my-webpages-200a1",
+            storageBucket: "my-webpages-200a1.firebasestorage.app",
+            messagingSenderId: "458562818634",
+            appId: "1:458562818634:web:51992c28fa48ebecb54cb3",
+            measurementId: "G-4P5FWM42MD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // Global logging helper
+        window.logToFirebase = (eventName, params = {}) => {
+            logEvent(analytics, eventName, params);
+            console.log(`[Firebase Log] ${eventName}`, params);
+        };
+    </script>
     <style>
         /* Custom scrollbar for the futuristic look */
         .custom-scrollbar::-webkit-scrollbar {
