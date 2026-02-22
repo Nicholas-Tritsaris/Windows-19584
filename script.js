@@ -70,24 +70,32 @@ class AppManager {
 
     getGalaxy(win) {
         const activeTab = win.tabs.find(t => t.id === win.activeTabId) || win.tabs[0];
-        const url = activeTab.id === 0 ? 'HTTPS://UNIVERSAL-NET.HUB/NEXUS' : 'HTTPS://MAPS.GALAXY/SOL';
+        const url = activeTab.url || 'https://www.wikipedia.org';
         return `
             <div class="flex flex-col h-full -m-6">
                 <div class="flex items-center space-x-3 bg-white/5 p-3 border-b border-white/10">
                     <div class="flex space-x-1.5">
-                        <button class="p-1 hover:bg-white/10 rounded text-white/40"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                        <button class="p-1 hover:bg-white/10 rounded text-white/40"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        <button onclick="window.os.navigateBrowser('${win.id}', 'back')" class="p-1 hover:bg-white/10 rounded text-white/40"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                        <button onclick="window.os.navigateBrowser('${win.id}', 'forward')" class="p-1 hover:bg-white/10 rounded text-white/40"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        <button onclick="window.os.navigateBrowser('${win.id}', 'reload')" class="p-1 hover:bg-white/10 rounded text-white/40"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
                     </div>
-                    <div class="flex-1 mx-4 bg-black/60 rounded-full px-4 py-1.5 text-[10px] text-blue-300/60 tracking-wider flex justify-between items-center border border-blue-500/20">
-                        <span>${url}</span>
-                        <i data-lucide="shield-check" class="w-3 h-3 text-emerald-400"></i>
+                    <div class="flex-1 mx-4 bg-black/60 rounded-full px-4 py-1.5 text-[10px] text-blue-300 tracking-wider flex items-center border border-blue-500/20">
+                        <i data-lucide="shield-check" class="w-3 h-3 text-emerald-400 mr-2"></i>
+                        <input type="text" value="${url}"
+                               onkeydown="window.os.handleUrlKeydown(event, '${win.id}')"
+                               class="bg-transparent border-none outline-none w-full text-blue-300 placeholder-blue-300/30"
+                               placeholder="Enter Quantum URL...">
                     </div>
                     <button class="p-1 hover:bg-white/10 rounded text-white/40" onclick="window.os.wm.addTab('${win.id}')"><i data-lucide="plus" class="w-4 h-4"></i></button>
                 </div>
-                <div class="flex-1 bg-gradient-to-b from-blue-900/10 to-transparent p-8 flex flex-col items-center justify-center text-center">
-                    <div class="mb-8 animate-spin-slow"><i data-lucide="globe" class="w-24 h-24 text-blue-500/50"></i></div>
-                    <h2 class="text-4xl font-light text-white mb-4 tracking-[0.2em] uppercase">${activeTab.title}</h2>
-                    <p class="text-white/40 max-w-md text-xs leading-loose uppercase tracking-widest">Temporal Protocol active. Neural link verified.</p>
+                <div class="flex-1 bg-white relative">
+                    <iframe id="browser-iframe-${win.id}" src="${url}" class="w-full h-full border-none"></iframe>
+                    <div id="browser-overlay-${win.id}" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-center hidden p-8">
+                        <div class="mb-8 animate-spin-slow"><i data-lucide="globe" class="w-24 h-24 text-blue-500/50"></i></div>
+                        <h2 class="text-2xl font-light text-white mb-4 tracking-widest uppercase">Connection Restricted</h2>
+                        <p class="text-white/40 max-w-md text-[10px] leading-loose uppercase tracking-[0.2em]">Many 21st century portals prevent dimensional embedding (iFrames). Try another node or use the Legacy Suite for restricted archives.</p>
+                        <button onclick="window.os.navigateBrowser('${win.id}', 'https://www.wikipedia.org')" class="mt-6 px-6 py-2 border border-blue-500/40 text-blue-400 text-[10px] uppercase tracking-widest hover:bg-blue-500/10 rounded-full">Reset to Wiki-Node</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -139,7 +147,9 @@ class AppManager {
                             <div class="text-[10px] text-white/40">Efficiency: 99.2%</div>
                         </div>
                     </div>
-                    <div class="w-32 h-1 bg-white/10 rounded-full"><div class="h-full bg-blue-500 w-[14%]"></div></div>
+                    <div class="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 w-[14%] shadow-[0_0_10px_#3b82f6]"></div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center">
@@ -149,6 +159,17 @@ class AppManager {
                     <div class="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center">
                         <div class="text-[9px] text-purple-400 uppercase mb-1">Temporal</div>
                         <div class="font-bold">LOCKED</div>
+                    </div>
+                </div>
+                <div class="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-white/60">Multiverse Sync Status</div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[8px] uppercase"><span>Alpha Timeline</span><span class="text-emerald-400">Synced</span></div>
+                        <div class="w-full h-1 bg-white/5 rounded-full"><div class="h-full bg-emerald-500 w-full opacity-50"></div></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[8px] uppercase"><span>Omega Timeline</span><span class="text-amber-400">Drifting</span></div>
+                        <div class="w-full h-1 bg-white/5 rounded-full"><div class="h-full bg-amber-500 w-2/3 opacity-50"></div></div>
                     </div>
                 </div>
             </div>
@@ -190,7 +211,6 @@ class AppManager {
 class WindowManager {
     constructor(os) {
         this.os = os;
-        this.layer = document.getElementById('windows-layer');
         this.dragData = null;
         this.resizeData = null;
         this.setupEvents();
@@ -202,6 +222,8 @@ class WindowManager {
     }
 
     open(appId) {
+        console.log('Opening app: ' + appId);
+        if (window.logToFirebase) window.logToFirebase('app_open', { appId });
         this.os.playSound('click');
         const existing = this.os.state.windows.find(w => w.id === appId);
         if (existing) {
@@ -233,12 +255,19 @@ class WindowManager {
     }
 
     getDefaultTabs(appId) {
-        if (appId === 'galaxy') return [{ id: 0, title: 'Nexus', icon: 'globe' }, { id: 1, title: 'Maps', icon: 'map' }];
+        if (appId === 'galaxy') return [
+            { id: 0, title: 'Nexus', icon: 'globe', url: 'https://www.wikipedia.org' },
+            { id: 1, title: 'Archive', icon: 'database', url: 'https://archive.org' }
+        ];
         if (appId === 'explorer') return [{ id: 0, title: 'Documents', icon: 'file-text' }, { id: 1, title: 'Holo-Grams', icon: 'image' }];
         return [{ id: 0, title: 'Main', icon: 'box' }];
     }
 
     renderWindow(win, app) {
+        console.log('Rendering window: ' + win.id);
+        const layer = document.getElementById('windows-layer');
+        if (!layer) return;
+
         const el = document.createElement('div');
         el.id = `window-${win.id}`;
         el.className = 'window absolute bg-slate-900/90 backdrop-blur-3xl border border-blue-500/30 rounded-xl overflow-hidden shadow-2xl flex flex-col pointer-events-auto transition-all duration-300';
@@ -264,17 +293,36 @@ class WindowManager {
             <div class="resize-handle"></div>
         `;
 
-        this.layer.appendChild(el);
+        layer.appendChild(el);
         this.updateContent(win.id);
         this.updateTabs(win.id);
         lucide.createIcons();
 
         // Bind Events
-        el.onmousedown = () => this.focus(win.id);
-        el.querySelector('.window-header').onmousedown = (e) => !win.isMaximized && this.startDrag(e, win.id);
-        el.querySelector('.win-btn-min').onclick = (e) => { e.stopPropagation(); this.toggleMinimize(win.id); };
-        el.querySelector('.win-btn-max').onclick = (e) => { e.stopPropagation(); this.toggleMaximize(win.id); };
-        el.querySelector('.win-btn-close').onclick = (e) => { e.stopPropagation(); this.close(win.id); };
+        el.addEventListener('mousedown', () => this.focus(win.id));
+
+        const header = el.querySelector('.window-header');
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button') || e.target.closest('.window-tabs')) return;
+            if (!win.isMaximized) this.startDrag(e, win.id);
+        });
+
+        const btnMin = el.querySelector('.win-btn-min');
+        const btnMax = el.querySelector('.win-btn-max');
+        const btnClose = el.querySelector('.win-btn-close');
+
+        [btnMin, btnMax, btnClose].forEach(btn => {
+            btn.addEventListener('mousedown', (e) => e.stopPropagation());
+        });
+
+        btnMin.onclick = (e) => { e.stopPropagation(); this.toggleMinimize(win.id); };
+        btnMax.onclick = (e) => { e.stopPropagation(); this.toggleMaximize(win.id); };
+        btnClose.onclick = (e) => {
+            console.log(`Closing window: ${win.id}`);
+            e.stopPropagation();
+            this.close(win.id);
+        };
+
         el.querySelector('.resize-handle').onmousedown = (e) => { e.stopPropagation(); !win.isMaximized && this.startResize(e, win.id); };
 
         // Snap Layouts
@@ -344,9 +392,12 @@ class WindowManager {
             const win = this.os.state.windows.find(w => w.id === winId);
             const fromIndex = win.tabs.findIndex(t => t.id === draggedTabId);
             const toIndex = win.tabs.findIndex(t => t.id === targetTabId);
-            const [moved] = win.tabs.splice(fromIndex, 1);
-            win.tabs.splice(toIndex, 0, moved);
-            this.updateTabs(winId);
+            if (fromIndex !== -1 && toIndex !== -1) {
+                const [moved] = win.tabs.splice(fromIndex, 1);
+                win.tabs.splice(toIndex, 0, moved);
+                this.updateTabs(winId);
+                this.os.saveState();
+            }
         }
     }
 
@@ -372,13 +423,15 @@ class WindowManager {
     close(id) {
         const el = document.getElementById(`window-${id}`);
         if (el) {
-            el.classList.add('opacity-0', 'scale-95');
+            el.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            // Remove from state immediately so UI updates (like taskbar) are instant
+            this.os.state.windows = this.os.state.windows.filter(w => w.id !== id);
+            this.os.updateTaskbar();
+            this.os.saveState();
+
             setTimeout(() => {
-                el.remove();
-                this.os.state.windows = this.os.state.windows.filter(w => w.id !== id);
-                this.os.updateTaskbar();
-                this.os.saveState();
-            }, 300);
+                if (el.parentNode) el.remove();
+            }, 200);
         }
     }
 
@@ -411,8 +464,12 @@ class WindowManager {
 
     startDrag(e, id) {
         const el = document.getElementById(`window-${id}`);
+        if (!el) return;
         el.classList.add('interacting');
-        this.dragData = { id, startX: e.clientX, startY: e.clientY, initX: parseInt(el.style.left), initY: parseInt(el.style.top) };
+        // Ensure initial coordinates are captured correctly
+        const initX = parseInt(el.style.left) || 0;
+        const initY = parseInt(el.style.top) || 0;
+        this.dragData = { id, startX: e.clientX, startY: e.clientY, initX, initY };
     }
 
     startResize(e, id) {
@@ -464,12 +521,14 @@ class AuraAI {
         this.chat = document.getElementById('aura-chat');
         this.input = document.getElementById('aura-input');
 
-        this.input.onkeydown = (e) => {
-            if (e.key === 'Enter' && this.input.value.trim()) {
-                this.ask(this.input.value);
-                this.input.value = '';
-            }
-        };
+        if (this.input) {
+            this.input.onkeydown = (e) => {
+                if (e.key === 'Enter' && this.input.value.trim()) {
+                    this.ask(this.input.value);
+                    this.input.value = '';
+                }
+            };
+        }
     }
 
     ask(text) {
@@ -478,20 +537,35 @@ class AuraAI {
             let response = "I'm processing your temporal query. Stability is 99.9%.";
             const q = text.toLowerCase();
             if (q.includes('who')) response = "I am Aura, your quantum neural assistant, built in 19582.";
-            if (q.includes('weather')) response = "Simulated conditions on Titan: Methane rain, -179°C.";
-            if (q.includes('help')) response = "I can manage your windows, restore past states, or simulate vintage environments.";
+            else if (q.includes('weather')) response = "Simulated conditions on Titan: Methane rain, -179°C.";
+            else if (q.includes('help')) response = "I can manage your windows, restore past states, or simulate vintage environments.";
+            else {
+                const responses = [
+                    "The quantum fabric suggests a high probability of success in your current timeline.",
+                    "Dimension 19584 is currently experiencing minor temporal flux. Adjusting neural buffer.",
+                    "I've analyzed your query. The legacy archives from the 21st century are currently being decrypted.",
+                    "Neural patterns recognized. Initiating multi-node synchronization.",
+                    "Warning: Temporal anomalies detected in the peripheral sectors."
+                ];
+                response = responses[Math.floor(Math.random() * responses.length)];
+            }
             this.addMessage(response, true);
         }, 800);
     }
 
     addMessage(text, isAI) {
+        if (!this.chat) return;
         const msg = document.createElement('div');
-        msg.className = isAI
-            ? "bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 text-[10px] text-white/80 leading-relaxed shadow-sm"
-            : "bg-purple-600/20 p-4 rounded-2xl rounded-tr-none border border-purple-500/20 text-[10px] text-white/80 leading-relaxed ml-8";
-        msg.textContent = text;
+        msg.className = `flex flex-col ${!isAI ? 'items-end' : 'items-start'} space-y-1 animate-in slide-in-from-bottom-2 duration-300 mb-4`;
+        msg.innerHTML = `
+            <span class="text-[8px] uppercase tracking-widest ${!isAI ? 'text-blue-400' : 'text-purple-400'} font-bold">${!isAI ? 'User' : 'Aura'}</span>
+            <div class="p-3 rounded-2xl text-[10px] leading-relaxed ${!isAI ? 'bg-blue-500/10 text-blue-100 rounded-tr-none' : 'bg-purple-500/10 text-purple-100 rounded-tl-none'} border border-white/5 max-w-[90%] shadow-lg">
+                ${text}
+            </div>
+        `;
         this.chat.appendChild(msg);
         this.chat.scrollTop = this.chat.scrollHeight;
+        this.os.playSound('click');
     }
 }
 
@@ -515,6 +589,7 @@ class OS {
     }
 
     start() {
+        if (window.logToFirebase) window.logToFirebase('system_boot_start');
         this.showBIOS();
     }
 
@@ -665,6 +740,7 @@ class OS {
     }
 
     showLogin() {
+        if (window.logToFirebase) window.logToFirebase('login_screen_reached');
         this.container.innerHTML = `
             <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 transition-opacity duration-1000">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20"></div>
@@ -965,6 +1041,48 @@ class OS {
             this.state.calcValue = this.state.calcValue === '0' ? val.toString() : this.state.calcValue + val;
         }
         display.textContent = this.state.calcValue;
+    }
+
+    handleUrlKeydown(e, winId) {
+        if (e.key === 'Enter') {
+            let url = e.target.value.trim();
+            if (url && !url.startsWith('http')) url = 'https://' + url;
+            this.navigateBrowser(winId, url);
+        }
+    }
+
+    navigateBrowser(winId, action) {
+        const win = this.state.windows.find(w => w.id === winId);
+        if (!win) return;
+        const activeTab = win.tabs.find(t => t.id === win.activeTabId);
+        const iframe = document.getElementById(`browser-iframe-${winId}`);
+        const overlay = document.getElementById(`browser-overlay-${winId}`);
+        const urlInput = document.querySelector(`#window-${winId} input`);
+
+        if (action === 'back') {
+            try { iframe.contentWindow.history.back(); } catch(e) {}
+        } else if (action === 'forward') {
+            try { iframe.contentWindow.history.forward(); } catch(e) {}
+        } else if (action === 'reload') {
+            iframe.src = iframe.src;
+        } else {
+            activeTab.url = action;
+            activeTab.title = action.split('/')[2] || 'New Node';
+            iframe.src = action;
+            if (urlInput) urlInput.value = action;
+            this.wm.updateTabs(winId);
+        }
+
+        this.saveState();
+
+        // Show overlay if common non-iframe sites are detected
+        const forbidden = ['google.com', 'facebook.com', 'twitter.com', 'github.com', 'youtube.com'];
+        const isForbidden = forbidden.some(site => action.includes(site));
+        if (isForbidden) {
+            overlay.classList.remove('hidden');
+        } else {
+            overlay.classList.add('hidden');
+        }
     }
 
     showNotification(title, text) {
