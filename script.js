@@ -224,7 +224,7 @@ class WindowManager {
     open(appId) {
         console.log('Opening app: ' + appId);
         if (window.logToFirebase) window.logToFirebase('app_open', { appId });
-        this.os.playSound('click');
+        this.os.playSound('open');
         const existing = this.os.state.windows.find(w => w.id === appId);
         if (existing) {
             this.focus(appId);
@@ -423,6 +423,7 @@ class WindowManager {
     close(id) {
         const el = document.getElementById(`window-${id}`);
         if (el) {
+            this.os.playSound('close');
             el.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
             // Remove from state immediately so UI updates (like taskbar) are instant
             this.os.state.windows = this.os.state.windows.filter(w => w.id !== id);
@@ -572,7 +573,6 @@ class AuraAI {
 class OS {
     constructor() {
         this.audioCtx = null;
-        this.auth0 = null;
         this.container = document.getElementById('os-container');
         this.state = {
             stage: 'bios',
@@ -591,69 +591,56 @@ class OS {
         this.loadState();
     }
 
-    async initAuth() {
-        try {
-            this.auth0 = await auth0.createAuth0Client({
-                domain: "blueboop.au.auth0.com",
-                clientId: "ISxQLGmTdgWfa6uB2Gs1BZryAz77sTgx",
-                authorizationParams: {
-                    redirect_uri: window.location.origin
-                }
-            });
-
-            const query = window.location.search;
-            if (query.includes("code=") && query.includes("state=")) {
-                await this.auth0.handleRedirectCallback();
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            this.state.isAuthenticated = await this.auth0.isAuthenticated();
-            if (this.state.isAuthenticated) {
-                this.state.user = await this.auth0.getUser();
-                console.log('User authenticated:', this.state.user);
-            }
-        } catch (e) {
-            console.error("Auth0 initialization failed", e);
-        }
-    }
-
     async start() {
-        await this.initAuth();
         if (window.logToFirebase) window.logToFirebase('system_boot_start');
         this.showBIOS();
     }
 
     playSound(type) {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-
         const now = this.audioCtx.currentTime;
-        if (type === 'boot') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.exponentialRampToValueAtTime(880, now + 0.5);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+        const playTone = (freq, type, duration, volume, ramp = true) => {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(volume, now);
+            if (ramp) gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
             osc.start(now);
-            osc.stop(now + 0.5);
-        } else if (type === 'click') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(1000, now);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } else if (type === 'notif') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, now); // C5
-            osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now);
-            osc.stop(now + 0.3);
+            osc.stop(now + duration);
+        };
+
+        switch(type) {
+            case 'boot':
+                playTone(220, 'sine', 1.5, 0.1);
+                setTimeout(() => playTone(440, 'sine', 1.0, 0.1), 200);
+                setTimeout(() => playTone(880, 'sine', 0.8, 0.05), 400);
+                break;
+            case 'click':
+                playTone(1200, 'square', 0.05, 0.02);
+                break;
+            case 'open':
+                playTone(400, 'sine', 0.3, 0.1);
+                setTimeout(() => playTone(600, 'sine', 0.3, 0.1), 100);
+                break;
+            case 'close':
+                playTone(600, 'sine', 0.3, 0.1);
+                setTimeout(() => playTone(400, 'sine', 0.3, 0.1), 100);
+                break;
+            case 'notif':
+                playTone(523.25, 'triangle', 0.4, 0.1);
+                setTimeout(() => playTone(659.25, 'triangle', 0.4, 0.1), 150);
+                break;
+            case 'error':
+                playTone(150, 'sawtooth', 0.5, 0.1);
+                break;
+            case 'shutdown':
+                playTone(440, 'sine', 1.0, 0.1);
+                setTimeout(() => playTone(220, 'sine', 1.5, 0.1), 300);
+                break;
         }
     }
 
@@ -770,50 +757,31 @@ class OS {
     }
 
     async login() {
-        if (this.auth0) {
-            await this.auth0.loginWithRedirect();
-        } else {
-            this.showDesktop();
-        }
+        this.showDesktop();
     }
 
     async logout() {
-        if (this.auth0) {
-            await this.auth0.logout({ logoutParams: { returnTo: window.location.origin } });
-        } else {
-            location.reload();
-        }
+        location.reload();
     }
 
     showLogin() {
         if (window.logToFirebase) window.logToFirebase('login_screen_reached');
 
-        const user = this.state.user;
-        const name = user ? (user.name || user.nickname || 'Traveler') : 'Traveler';
-        const picture = user ? user.picture : null;
+        const name = 'Traveler';
 
         this.container.innerHTML = `
             <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 transition-opacity duration-1000">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20"></div>
                 <div class="relative z-10 flex flex-col items-center">
                     <div class="w-32 h-32 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-center mb-8 shadow-2xl overflow-hidden">
-                        ${picture ? `<img src="${picture}" class="w-full h-full object-cover">` : `<i data-lucide="user" class="w-12 h-12 text-white/20"></i>`}
+                        <i data-lucide="user" class="w-12 h-12 text-white/20"></i>
                     </div>
                     <h1 class="text-2xl text-white font-light mb-10 tracking-[0.3em] uppercase">${name}</h1>
-                    ${this.state.isAuthenticated ?
-                        `<button onclick="window.os.showDesktop()" class="px-10 py-3 bg-blue-500/20 border border-blue-500/40 rounded-full text-white text-xs tracking-widest hover:bg-blue-500/30 transition-all uppercase active:scale-95 shadow-[0_0_20px_rgba(59,130,246,0.3)]">Enter Neural Interface</button>
-                         <button onclick="window.os.logout()" class="mt-4 text-[8px] text-white/20 hover:text-white/40 uppercase tracking-widest">Switch Identity</button>` :
-                        `<button onclick="window.os.login()" class="px-10 py-3 bg-white/5 border border-white/10 rounded-full text-white text-xs tracking-widest hover:bg-white/10 transition-all uppercase active:scale-95">Link Neural Interface</button>`
-                    }
+                    <button onclick="window.os.login()" class="px-10 py-3 bg-blue-500/20 border border-blue-500/40 rounded-full text-white text-xs tracking-widest hover:bg-blue-500/30 transition-all uppercase active:scale-95 shadow-[0_0_20px_rgba(59,130,246,0.3)]">Enter Neural Interface</button>
                 </div>
             </div>
         `;
         lucide.createIcons();
-
-        // Auto-show desktop if coming back from redirect
-        if (this.state.isAuthenticated && window.location.search === "") {
-            // setTimeout(() => this.showDesktop(), 1500);
-        }
     }
 
     initIcons() {
@@ -863,21 +831,6 @@ class OS {
         const menu = document.getElementById('start-menu');
         this.state.isStartOpen = !this.state.isStartOpen;
         menu.classList.toggle('hidden');
-        if (!menu.classList.contains('hidden')) {
-            const user = this.state.user;
-            const name = user ? (user.name || user.nickname || 'Traveler') : 'Traveler';
-            const picture = user ? user.picture : null;
-            const userDisplay = menu.querySelector('.user-display-container');
-            if (userDisplay) {
-                userDisplay.innerHTML = `
-                    <div class="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 overflow-hidden">
-                        ${picture ? `<img src="${picture}" class="w-full h-full object-cover">` : `<i data-lucide="user" class="w-4 h-4"></i>`}
-                    </div>
-                    <span class="text-[10px] font-bold tracking-widest uppercase">${name}</span>
-                `;
-                lucide.createIcons();
-            }
-        }
     }
 
     toggleAura() {
@@ -1021,7 +974,7 @@ class OS {
                         <div class="flex gap-2">
                             <button onclick="window.os.logout()" class="p-2 hover:bg-white/10 rounded-xl text-white/40" title="Sign Out"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                             <button onclick="localStorage.clear(); location.reload();" class="p-2 hover:bg-white/10 rounded-xl text-white/40" title="Clear System Cache"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-                            <button onclick="location.reload()" class="p-2 hover:bg-red-500/20 rounded-xl text-red-500" title="Shut Down"><i data-lucide="power" class="w-4 h-4"></i></button>
+                            <button onclick="window.os.playSound('shutdown'); setTimeout(() => location.reload(), 2000)" class="p-2 hover:bg-red-500/20 rounded-xl text-red-500" title="Shut Down"><i data-lucide="power" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </div>
@@ -1034,13 +987,13 @@ class OS {
                         </button>
                     </div>
                     <div class="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-2xl border border-white/5">
-                        <button onclick="window.os.toggleStart()" class="p-2.5 hover:bg-white/10 rounded-xl transition-all group active:scale-90">
+                        <button onclick="window.os.toggleStart()" aria-label="Start" class="p-2.5 hover:bg-white/10 rounded-xl transition-all group active:scale-90">
                             <i data-lucide="layout-grid" class="w-5 h-5 text-blue-400"></i>
                         </button>
-                        <button onclick="window.os.toggleTaskView()" class="p-2.5 hover:bg-white/10 rounded-xl transition-all active:scale-90">
+                        <button onclick="window.os.toggleTaskView()" aria-label="Task View" class="p-2.5 hover:bg-white/10 rounded-xl transition-all active:scale-90">
                             <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
                         </button>
-                        <button onclick="window.os.toggleRecall()" class="p-2.5 hover:bg-white/10 rounded-xl transition-all active:scale-90">
+                        <button onclick="window.os.toggleRecall()" aria-label="Recall" class="p-2.5 hover:bg-white/10 rounded-xl transition-all active:scale-90">
                             <i data-lucide="history" class="w-5 h-5 text-amber-400"></i>
                         </button>
                         <div class="w-px h-6 bg-white/10 mx-1"></div>
@@ -1112,7 +1065,10 @@ class OS {
             try {
                 const sanitized = this.state.calcValue.replace(/[^0-9+\-*/.]/g, '');
                 this.state.calcValue = new Function(`return ${sanitized}`)().toString();
-            } catch { this.state.calcValue = 'Error'; }
+            } catch {
+                this.state.calcValue = 'Error';
+                this.playSound('error');
+            }
         } else {
             this.state.calcValue = this.state.calcValue === '0' ? val.toString() : this.state.calcValue + val;
         }
@@ -1156,6 +1112,7 @@ class OS {
         const isForbidden = forbidden.some(site => action.includes(site));
         if (isForbidden) {
             overlay.classList.remove('hidden');
+            this.playSound('error');
         } else {
             overlay.classList.add('hidden');
         }
